@@ -20,6 +20,7 @@
 data/       数据、知识库、测试集
 src/        项目代码
 configs/    C0-C4 配置文件
+prompts/    Prompt 模板
 runs/       实验日志、结果表、图表
 docs/       项目文档、分工、实验记录
 ```
