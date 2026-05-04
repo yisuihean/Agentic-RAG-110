@@ -17,6 +17,15 @@ uv sync
 
 复制 `.env.example` 为 `.env`，按其中注释填写 **火山方舟**（向量）与 **DeepSeek**（对话）的密钥与模型名。
 
+### 模型与密钥（控制台）
+
+实际使用的 **Model ID / Endpoint ID** 以各平台控制台为准，与 `.env` 中变量对应关系如下。
+
+| 用途 | `.env` 中主要变量 | 说明与配置入口 |
+|------|-------------------|----------------|
+| 对话（RAG 生成） | `DEEPSEEK_API_KEY`、`DEEPSEEK_CHAT_MODEL` | 在 [DeepSeek 平台 · 用量与 API Key](https://platform.deepseek.com/usage) 创建密钥、查看调用与用量。 |
+| 文本/多模态向量 | `ARK_API_KEY`、`ARK_EMBEDDING_MODEL`、`ARK_EMBEDDING_DIMENSIONS` | 在火山引擎 [方舟 · 豆包向量化相关模型](https://console.volcengine.com/ark/region:ark+cn-beijing/model/detail?Id=doubao-embedding) 开通并查询模型能力、维度（如 1024/2048）及 Model ID。 |
+
 **协作注意：** 不要提交 `.env`；各成员本地自建密钥。提交前可执行 `git status` 确认未误加密钥文件。
 
 **若 API 报错：** 检查 `.env` 中 Key、模型 ID、方舟 `ARK_EMBEDDING_DIMENSIONS`（1024/2048）是否与控制台开通的模型一致。
