@@ -1,11 +1,6 @@
 """仅 DeepSeek 对话示例（不经过 RAG）。"""
 
 import sys
-from pathlib import Path
-
-from dotenv import load_dotenv
-
-load_dotenv(Path(__file__).resolve().parent / ".env")
 
 from agentic_rag import config
 from agentic_rag.llm import create_deepseek_client

@@ -1,4 +1,8 @@
-"""火山方舟多模态向量 API（文本项）：POST .../embeddings/multimodal"""
+"""火山方舟多模态向量 API（纯文本项）：POST .../embeddings/multimodal。
+
+文档：https://www.volcengine.com/docs/82379/1523520
+纯文本时 input 为 [{\"type\":\"text\",\"text\":...}]，与 curl 示例一致。
+"""
 
 from __future__ import annotations
 
@@ -8,9 +12,14 @@ from agentic_rag import config
 
 _BATCH = 16
 
+_QUERY_PREFIX = (
+    "Instruct: Given a web search query, retrieve relevant passages that answer the "
+    "query\nQuery: "
+)
+
 
 def _parse_embedding_payload(payload: object) -> list[list[float]]:
-    """兼容 data 为 list（OpenAI 风格）或文档描述的单个 object。"""
+    """兼容 data 为 list（多条）或单 object（单条 embedding）。"""
     if payload is None:
         raise ValueError("响应缺少 data 字段")
     if isinstance(payload, list):
@@ -33,16 +42,74 @@ def _parse_embedding_payload(payload: object) -> list[list[float]]:
     raise ValueError(f"无法解析 embedding 结构: {type(payload)}")
 
 
-def embed_texts_multimodal(
+def _mrl_truncate(vec: list[float], dim: int) -> list[float]:
+    if dim <= 0:
+        return vec
+    if len(vec) <= dim:
+        return vec
+    return vec[:dim]
+
+
+def _embed_one_batch(
+    http: httpx.Client,
+    url: str,
+    headers: dict[str, str],
+    batch: list[str],
+    *,
+    model: str,
+    dimensions: int,
+    encoding_format: str,
+) -> list[list[float]]:
+    body: dict = {
+        "model": model,
+        "input": [{"type": "text", "text": t} for t in batch],
+        "encoding_format": encoding_format,
+        "dimensions": dimensions,
+    }
+    r = http.post(url, headers=headers, json=body)
+    if r.is_error:
+        detail = (r.text or "")[:800]
+        raise RuntimeError(
+            f"方舟向量接口 HTTP {r.status_code}：{detail or r.reason_phrase}"
+        )
+    data = r.json()
+    err = data.get("error")
+    if err:
+        raise RuntimeError(err)
+    vecs = _parse_embedding_payload(data.get("data"))
+    if len(vecs) == len(batch):
+        return [_mrl_truncate(v, dimensions) for v in vecs]
+    # 部分套餐单次只返回一条融合向量：逐条请求
+    if len(batch) == 1:
+        raise RuntimeError(
+            f"期望 1 条向量，解析得到 {len(vecs)} 条，请检查接口响应格式"
+        )
+    out: list[list[float]] = []
+    for t in batch:
+        one = _embed_one_batch(
+            http,
+            url,
+            headers,
+            [t],
+            model=model,
+            dimensions=dimensions,
+            encoding_format=encoding_format,
+        )
+        out.extend(one)
+    return out
+
+
+def embed_texts(
     texts: list[str],
     *,
     model: str | None = None,
     dimensions: int | None = None,
+    is_query: bool = False,
     encoding_format: str = "float",
 ) -> list[list[float]]:
     """
-    纯文本向量化：每项 input 为 {\"type\":\"text\",\"text\":...}。
-    参考：https://ark.cn-beijing.volces.com/api/v3/embeddings/multimodal
+    文本向量化：调用 `POST .../embeddings/multimodal`，每项为 {"type":"text","text":...}。
+    `dimensions` 与官方一致，取 1024 或 2048（见环境变量 ARK_EMBEDDING_DIMENSIONS）。
     """
     if not texts:
         return []
@@ -59,6 +126,10 @@ def embed_texts_multimodal(
     base = (config.ARK_BASE_URL or "").rstrip("/")
     url = f"{base}/embeddings/multimodal"
 
+    to_embed = (
+        texts if not is_query else [f"{_QUERY_PREFIX}{t}" for t in texts]
+    )
+
     headers = {
         "Authorization": f"Bearer {key}",
         "Content-Type": "application/json",
@@ -66,25 +137,17 @@ def embed_texts_multimodal(
 
     all_vecs: list[list[float]] = []
     with httpx.Client(timeout=120.0) as http:
-        for i in range(0, len(texts), _BATCH):
-            batch = texts[i : i + _BATCH]
-            body: dict = {
-                "model": m,
-                "input": [{"type": "text", "text": t} for t in batch],
-                "encoding_format": encoding_format,
-                "dimensions": dim,
-            }
-            r = http.post(url, headers=headers, json=body)
-            r.raise_for_status()
-            data = r.json()
-            err = data.get("error")
-            if err:
-                raise RuntimeError(err)
-            vecs = _parse_embedding_payload(data.get("data"))
-            if len(vecs) != len(batch):
-                raise RuntimeError(
-                    f"本批请求 {len(batch)} 条文本，但返回 {len(vecs)} 条向量，请检查模型或响应格式"
-                )
+        for i in range(0, len(to_embed), _BATCH):
+            batch = to_embed[i : i + _BATCH]
+            vecs = _embed_one_batch(
+                http,
+                url,
+                headers,
+                batch,
+                model=m,
+                dimensions=dim,
+                encoding_format=encoding_format,
+            )
             all_vecs.extend(vecs)
 
     return all_vecs

@@ -14,10 +14,12 @@ def _env(name: str, default: str | None = None) -> str | None:
     return v.strip()
 
 
-# 火山方舟：仅用于向量化（embeddings/multimodal）
+# 火山方舟：多模态向量（POST .../embeddings/multimodal，纯文本项）
 ARK_BASE_URL = _env("ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3")
 ARK_API_KEY = _env("ARK_API_KEY")
-ARK_EMBEDDING_MODEL = _env("ARK_EMBEDDING_MODEL")
+ARK_EMBEDDING_MODEL = _env(
+    "ARK_EMBEDDING_MODEL", "doubao-embedding-vision-250615"
+)
 ARK_EMBEDDING_DIMENSIONS = int(_env("ARK_EMBEDDING_DIMENSIONS", "2048") or "2048")
 
 # DeepSeek：OpenAI 兼容对话（RAG 生成）

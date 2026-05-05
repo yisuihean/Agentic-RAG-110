@@ -1,14 +1,10 @@
+"""单次命令行 RAG：每次运行完整流程（解析 → 向量索引 → 检索 → DeepSeek）。
+
+用法：uv run python rag_demo.py <文档路径> <问题>
 """
-RAG 命令行入口。业务逻辑在 agentic_rag.pipelines.local_rag。
-"""
 
-from pathlib import Path
+from __future__ import annotations
 
-from dotenv import load_dotenv
-
-load_dotenv(Path(__file__).resolve().parent / ".env")
-
-import argparse
 import sys
 
 from agentic_rag import config
@@ -16,22 +12,16 @@ from agentic_rag.pipelines import local_rag_answer
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="本地 RAG：方舟向量 + DeepSeek 回答")
-    p.add_argument("file", help="本地文档路径")
-    p.add_argument("question", help="问题")
-    p.add_argument("-k", type=int, default=4, help="检索条数，默认 4")
-    args = p.parse_args()
-
-    if not config.ARK_API_KEY or not config.ARK_EMBEDDING_MODEL:
-        sys.exit("请配置 .env 中的 ARK_API_KEY 与 ARK_EMBEDDING_MODEL。")
+    if len(sys.argv) < 3:
+        print("用法: uv run python rag_demo.py <文档路径> <问题>", file=sys.stderr)
+        sys.exit(1)
+    if not config.ARK_API_KEY:
+        sys.exit("请配置 .env：ARK_API_KEY")
     if not config.DEEPSEEK_API_KEY:
-        sys.exit("请配置 .env 中的 DEEPSEEK_API_KEY。")
-
-    try:
-        out = local_rag_answer(args.file, args.question, top_k=args.k)
-    except Exception as e:
-        sys.exit(str(e))
-    print(out)
+        sys.exit("请配置 .env：DEEPSEEK_API_KEY")
+    path = sys.argv[1]
+    question = sys.argv[2]
+    print(local_rag_answer(path, question, top_k=4))
 
 
 if __name__ == "__main__":
