@@ -1,6 +1,8 @@
-# 项目架构与协作说明
+# C0 本地 RAG 基线代码架构说明
 
-本文描述 **Agentic RAG** 的代码布局、数据流、模块职责与团队协作约定。使用方式与运行入口仍以根目录 [README.md](README.md) 为准。
+本文描述从 `Agentic-RAG-110` 迁移而来的 **C0 Naive RAG / 单文档本地 RAG 基线代码** 的代码布局、数据流和模块职责。使用方式与运行入口仍以根目录 [README.md](README.md) 为准。
+
+注意：这部分代码不是完整 Agentic RAG。它目前不包含 query rewrite、多轮检索、rerank、任务规划、外部工具调用和 self-check；它的作用是作为本课题 C0 普通 RAG 基线和后续 Demo 起点。
 
 ---
 
