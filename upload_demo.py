@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import gradio as gr
 
 from agentic_rag import config

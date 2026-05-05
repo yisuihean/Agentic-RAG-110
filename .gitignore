@@ -1,10 +1,40 @@
-.venv/
-.env
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# uv / build
 dist/
+build/
 *.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project generated data
+runs/logs/*
+runs/results/*
+runs/figures/*
+data/processed/vector_index/*
+data/processed/*.pkl
+
+# Keep folder placeholders
+!runs/logs/README.md
+!runs/results/README.md
+!runs/figures/README.md
+!data/processed/README.md
+!data/processed/vector_index/README.md

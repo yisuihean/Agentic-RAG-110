@@ -1,68 +1,62 @@
-# Agentic RAG（教学实验项目）
+# Topic4 Agentic RAG Evaluation
 
-## 使用说明
+本项目对应 110 实验室课题四，研究面向学习与知识服务任务的 Agentic RAG 技术增强与评测。
 
-### 环境
+## 项目定位
 
-- Python 3.11+
-- 依赖与锁文件由 [uv](https://github.com/astral-sh/uv) 管理
+本项目不是单纯做一个学习助手产品，而是通过 C0-C4 对比实验，评估 query rewrite、多轮检索、rerank、self-check 和工具调用等 Agentic RAG 模块的作用。
 
-**首次克隆：**
+## 对比配置
 
-```bash
-git clone <本仓库地址>
-cd Agentic-RAG
-uv sync
+- C0 Naive RAG：普通 RAG 基线
+- C1 Query Rewrite RAG：加入查询诊断与查询改写
+- C2 Advanced RAG：加入 BM25、混合检索和 rerank
+- C3 Agentic Retrieval RAG：加入任务规划、多轮检索和 self-check
+- C4 Tool-Augmented Agentic RAG：加入文件读取、代码执行、计算器、表格分析工具
+
+## 项目目录
+
+```text
+data/       数据、知识库、测试集
+src/        项目代码，包括导入的本地 RAG 基础实现
+configs/    C0-C4 配置文件
+prompts/    Prompt 模板
+runs/       实验日志、结果表、图表
+docs/       项目文档、分工、实验记录
 ```
 
-复制 `.env.example` 为 `.env`，按其中注释填写 **火山方舟**（向量）与 **DeepSeek**（对话）的密钥与模型名。
+## 已导入的基础 RAG 代码
 
-### 模型与密钥（控制台）
+`Agentic-RAG-110` 仓库中的本地 RAG 基础实现已经套入本项目框架，主要包括：
 
-实际使用的 **Model ID / Endpoint ID** 以各平台控制台为准，与 `.env` 中变量对应关系如下。
-
-| 用途 | `.env` 中主要变量 | 说明与配置入口 |
-|------|-------------------|----------------|
-| 对话（RAG 生成） | `DEEPSEEK_API_KEY`、`DEEPSEEK_CHAT_MODEL` | 在 [DeepSeek 平台 · 用量与 API Key](https://platform.deepseek.com/usage) 创建密钥、查看调用与用量。 |
-| 多模态向量（本项目仅用文本项） | `ARK_API_KEY`、`ARK_EMBEDDING_MODEL`、`ARK_EMBEDDING_DIMENSIONS` | 方舟 [多模态向量化](https://www.volcengine.com/docs/82379/1523520) 开通模型（如 `doubao-embedding-vision-250615`），`dimensions` 为 **1024 或 2048**。 |
-
-**协作与安全：** 勿提交 `.env`；勿将密钥写入仓库或文档。更完整的模块边界、目录说明与协作约定见 **[ARCHITECTURE.md](ARCHITECTURE.md)**。
-
-**若 API 报错：** 检查 `.env` 中 Key、模型 ID、方舟 `ARK_EMBEDDING_DIMENSIONS`（1024/2048）是否与控制台开通的模型一致。
-
-### 运行方式
-
-| 脚本 | 作用 |
-|------|------|
-| `uv run python main.py` | 仅测试 DeepSeek 对话（不建库、不检索） |
-| `uv run python demo.py` | **先输入/传入文档路径建索引**，再在同一终端多次提问（文档不重复向量化） |
-| `uv run python demo.py "D:\资料\x.pdf"` | 同上，路径作为参数 |
-| `uv run python rag_demo.py 文档路径 "你的问题"` | 单次问答：每次整条链路（含重建索引） |
-| `uv run python upload_demo.py` | 浏览器上传文档 + 提问（Gradio） |
-
-### 在代码里复用 RAG 一条线
-
-```python
-from agentic_rag.pipelines import local_rag_answer
-
-text = local_rag_answer("资料.pdf", "这一节结论是什么？", top_k=4)
-print(text)
+```text
+src/agentic_rag/   文档解析、向量接口、LLM 调用和本地 RAG pipeline
+main.py            DeepSeek 对话连通性测试
+demo.py            交互式本地 RAG Demo
+rag_demo.py        单次命令行 RAG Demo
+upload_demo.py     Gradio 上传文档问答 Demo
+ARCHITECTURE.md    原仓库架构说明，作为代码参考文档保留
 ```
 
-多轮问答且只建一次索引：
+运行示例：
 
-```python
-from agentic_rag.pipelines import build_vector_index, answer_with_index
-
-index = build_vector_index("资料.pdf")
-print(answer_with_index(index, "第一个问题"))
-print(answer_with_index(index, "第二个问题"))
+```powershell
+uv run python main.py
+uv run python demo.py
+uv run python rag_demo.py 文档路径 "你的问题"
+uv run python upload_demo.py
 ```
 
-需已配置 `.env` 且能访问对应 API。
+这些代码目前作为 C0 普通 RAG 和后续 Demo 的基础资产，后续会逐步整理进 C0-C4 实验配置与批量评测流程。
 
----
+## 当前阶段
 
-## 架构与协作
+阶段 0：启动准备。
 
-每个入口脚本、`src/agentic_rag/` 下各子目录及内部文件的职责、依赖方向、Git 与评审约定见 **[ARCHITECTURE.md](ARCHITECTURE.md)**。
+当前目标：
+
+- 建立项目目录
+- 初始化 uv 环境
+- 固定 Python 版本
+- 建立基础配置文件
+- 明确三人分工
